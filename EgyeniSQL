@@ -153,5 +153,21 @@ Részleges INSERT	INSERT INTO Hallgato (Nev, Email) VALUES (...)
 Üres mező	NULL
 Alapérték használat	mezőt kihagyjuk → SQLite automatikusan tölti (DEFAULT, AUTOINCREMENT)
 
+---------------------------LEKÉRDEZÉSEK -------------------------
+
+SELECT
+    h.Nev AS Hallgato,
+    t.Cim AS Tanfolyam,
+    o.Nev AS Oktato,
+    GROUP_CONCAT(s.Szakertelen, ', ') AS OktatoSzakertelmei
+FROM Hallgato h
+JOIN Beiratkozik b ON h.HallgatoID = b.HallgatoID
+JOIN Tanfolyam t ON b.TanfolyamID = t.TanfolyamID
+JOIN Tart ta ON t.TanfolyamID = ta.TanfolyamID
+JOIN Oktato o ON ta.OktatoID = o.OktatoID
+LEFT JOIN Szakertelmek s ON o.OktatoID = s.OktatoID
+GROUP BY h.HallgatoID, t.TanfolyamID;
+-----------------------------------------------------------------
+
 
 
