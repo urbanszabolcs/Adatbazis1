@@ -1,0 +1,157 @@
+sudo sqlite3 egyeni.db
+PRAGMA foreign_keys = ON;
+
+-- ===== Hallgató =====
+CREATE TABLE Hallgato (
+    HallgatoID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Nev TEXT NOT NULL,
+    Email TEXT UNIQUE NOT NULL,
+    Telefonszam TEXT,
+    SzuletesiDatum DATE NOT NULL
+);
+
+-- ===== Tanfolyam =====
+CREATE TABLE Tanfolyam (
+    TanfolyamID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Cim TEXT NOT NULL,
+    Leiras TEXT,
+    Kategoria TEXT NOT NULL,
+    Oradij INTEGER DEFAULT 0
+);
+
+-- ===== Oktató =====
+CREATE TABLE Oktato (
+    OktatoID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Nev TEXT NOT NULL
+);
+
+-- ===== Oktató többértékű tulajdonság: szakértelem =====
+CREATE TABLE Szakertelmek (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    OktatoID INTEGER NOT NULL,
+    Szakertelen TEXT NOT NULL,
+    FOREIGN KEY (OktatoID) REFERENCES Oktato(OktatoID)
+);
+
+-- ===== Több-több kapcsolat: Hallgató ↔ Tanfolyam =====
+CREATE TABLE Beiratkozik (
+    HallgatoID INTEGER NOT NULL,
+    TanfolyamID INTEGER NOT NULL,
+    BeiratkozasDatuma DATE NOT NULL,
+    Fizetett BOOLEAN DEFAULT 0,
+    PRIMARY KEY (HallgatoID, TanfolyamID),
+    FOREIGN KEY (HallgatoID) REFERENCES Hallgato(HallgatoID),
+    FOREIGN KEY (TanfolyamID) REFERENCES Tanfolyam(TanfolyamID)
+);
+
+-- ===== Oktató tart tanfolyamot =====
+CREATE TABLE Tart (
+    OktatoID INTEGER NOT NULL,
+    TanfolyamID INTEGER NOT NULL,
+    PRIMARY KEY (OktatoID, TanfolyamID),
+    FOREIGN KEY (OktatoID) REFERENCES Oktato(OktatoID),
+    FOREIGN KEY (TanfolyamID) REFERENCES Tanfolyam(TanfolyamID)
+);
+
+-- ===== Vizsga =====
+CREATE TABLE Vizsga (
+    VizsgaID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Datum DATE NOT NULL,
+    Idotartam INTEGER,
+    MaxPontszam INTEGER NOT NULL
+);
+
+-- ===== Vizsgázik kapcsolat =====
+CREATE TABLE Vizsgazik (
+    HallgatoID INTEGER NOT NULL,
+    VizsgaID INTEGER NOT NULL,
+    Pontszam INTEGER,
+    Sikeres BOOLEAN,
+    PRIMARY KEY (HallgatoID, VizsgaID),
+    FOREIGN KEY (HallgatoID) REFERENCES Hallgato(HallgatoID),
+    FOREIGN KEY (VizsgaID) REFERENCES Vizsga(VizsgaID)
+);
+
+
+Feltöltések
+-- Hallgatók
+INSERT INTO Hallgato (Nev, Email, Telefonszam, SzuletesiDatum) VALUES
+('Kiss Anna', 'anna@gmail.com', '06203334455', '2001-04-12'),
+('Nagy Béla', 'bela@gmail.com', NULL, '1998-11-02'),
+('Tóth Csaba', 'csaba@gmail.com', '06203338888', '2000-01-01'),
+('Szabó Réka', 'reka@gmail.com', NULL, '1999-05-18');
+
+-- Tanfolyamok
+INSERT INTO Tanfolyam (Cim, Leiras, Kategoria, Oradij) VALUES
+('Java Programozás', 'Alapoktól haladó szintig', 'IT', 5000),
+('Adatbázis-kezelés', 'SQL és adatmodellezés', 'IT', 6000),
+('Fotózás', 'Kezdő tanfolyam', 'Művészet', 3000);
+
+-- Oktatók
+INSERT INTO Oktato (Nev) VALUES
+('Dr. Kovács Péter'),
+('Szalai Mária'),
+('Horváth Bence');
+
+-- Szakértelmek
+INSERT INTO Szakertelmek (OktatoID, Szakertelen) VALUES
+(1, 'Java'),
+(1, 'SQL'),
+(2, 'Fotózás'),
+(3, 'SQL');
+
+-- Beiratkozások
+INSERT INTO Beiratkozik VALUES
+(1, 1, '2025-01-10', 1),
+(1, 2, '2025-01-15', 0),
+(2, 3, '2025-01-19', 1),
+(3, 1, '2025-01-20', 0);
+
+-- Tanfolyamot tart
+INSERT INTO Tart VALUES
+(1,1),
+(1,2),
+(2,3);
+
+-- Vizsgák
+INSERT INTO Vizsga (Datum, Idotartam, MaxPontszam) VALUES
+('2025-03-01', 90, 100),
+('2025-04-12', 120, 100);
+
+-- Vizsgázik
+INSERT INTO Vizsgazik VALUES
+(1,1,85,1),
+(1,2,NULL,NULL),
+(2,1,40,0),
+(3,1,NULL,NULL);
+
+
+
+Alter Ego
+ALTER TABLE Hallgato ADD COLUMN Lakcim TEXT;
+
+ALTER TABLE Tanfolyam RENAME TO Kurzus;
+
+CREATE TABLE uj (...) ; 
+INSERT INTO uj SELECT ... FROM regi;
+DROP TABLE regi;
+
+
+📌 3) SQL kapcsolatok ismertetése (kötelező feladathoz)
+Kapcsolat típusa	Példa	SQL megvalósítás
+1–N	Hallgató → Vizsgázik	FOREIGN KEY(HallgatoID)
+N–N	Hallgató ↔ Tanfolyam	PRIMARY KEY(HallgatoID, TanfolyamID)
+Kötelező kapcsolat	NOT NULL mező	pl.: Nev TEXT NOT NULL
+Opcionális kapcsolat	NULL érték megengedett	pl.: Telefonszam TEXT
+Alapérték	DEFAULT	pl.: Fizetett BOOLEAN DEFAULT 0
+Egyediség	UNIQUE	pl.: Email TEXT UNIQUE
+
+📌 4) INSERT lehetőségek összefoglaló
+Típus	Példa
+Teljes INSERT	INSERT INTO Hallgato VALUES (...)
+Részleges INSERT	INSERT INTO Hallgato (Nev, Email) VALUES (...)
+Üres mező	NULL
+Alapérték használat	mezőt kihagyjuk → SQLite automatikusan tölti (DEFAULT, AUTOINCREMENT)
+
+
+
